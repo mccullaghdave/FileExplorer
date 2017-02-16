@@ -12,7 +12,7 @@ public class FileActivity extends AppCompatActivity {
         if (savedInstanceState != null) {
             Log.d(TAG, "onCreate() Restoring previous state xxxxxxxxxxxxxxxxxxxxxxxx");
         } else {
-            Log.d(TAG, "onCreate() No saved state availablexxxxxxxxxxxxxxxxxxxx");
+            Log.d(TAG, "onCreate() No saved state availablexxxxxxxxxxxxxxxxx");
             /* initialize app */
         }
 
