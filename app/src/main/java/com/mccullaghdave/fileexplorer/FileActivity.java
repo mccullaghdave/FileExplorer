@@ -10,7 +10,7 @@ public class FileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
-            Log.d(TAG, "onCreate() Restoring previous state xxxxxxxxxxxxxxxxxxxxxxxx");
+            Log.d(TAG, "onCreate() Restoring previous state xxxxxxxxxxxxxxxxxxx");
         } else {
             Log.d(TAG, "onCreate() No saved state availablexxxxxxxxxxxxxxxxx");
             /* initialize app */
