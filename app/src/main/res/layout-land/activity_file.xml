@@ -6,8 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="300dp"
     android:layout_margin="8dp"
-    app:cardElevation="11dp"
-    android:clickable="true">
+    app:cardElevation="11dp">
 
     <RelativeLayout
         android:layout_width="match_parent"
