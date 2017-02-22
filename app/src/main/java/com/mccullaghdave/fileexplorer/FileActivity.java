@@ -10,7 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ListAdapter;
 import android.widget.TextView;
@@ -20,32 +19,22 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.util.Date;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class FileActivity extends AppCompatActivity {
 
     private static final String TAG = FileActivity.class.getSimpleName();
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static String[] PERMISSIONS_STORAGE = {
+    private static final String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
     private static final String COMICS_DIRECTORY = "Comics";
-    private static final String META_FILE = "meta.txt";
-    private static final String CBZ_FILE = "example.cbz";
-    private static final String CBT_FILE = "example.cbt";
-    private static final String CB7_FILE = "example.cb7";
 
     private TextView logView;
     private GridView comicsGridView;
@@ -80,7 +69,6 @@ public class FileActivity extends AppCompatActivity {
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
-
 
 
     public boolean verifyStoragePermissions(final Activity activity) {
@@ -125,36 +113,9 @@ public class FileActivity extends AppCompatActivity {
             final File comicDir = getComicStorageDir();
             info("Comic directory is: " + comicDir);
 
-            writeTestFile(comicDir, META_FILE, "Test context " + DateFormat.getDateTimeInstance().format(new Date()));
-            writeTestFile(comicDir, CBZ_FILE, "Live Long and Prosper");
-            writeTestFile(comicDir, CBT_FILE, "Highly Illogical...");
-            writeTestFile(comicDir, CB7_FILE, "I'm Givin' Her All She's Got, Captain!");
-            readTestFile(comicDir);
             displayComicBookFiles(comicDir);
         } else {
             error("Storage cannot be written to, please ensure your SD card is properly mounted and is not mounted via USB");
-        }
-    }
-
-    private void writeTestFile(final File directory, final String name, final String content) {
-        final File metaFile = new File(directory, name);
-
-        try {
-            FileUtils.write(metaFile, content, UTF_8);
-        } catch (final IOException e) {
-            e.printStackTrace();
-            error(e.getMessage());
-        }
-    }
-
-    private void readTestFile(final File directory) {
-        final File metaFile = new File(directory, META_FILE);
-        try {
-            final String content = FileUtils.readFileToString(metaFile, UTF_8);
-            info("File contents are: " + content);
-        } catch (final IOException e) {
-            e.printStackTrace();
-            error(e.getMessage());
         }
     }
 
@@ -162,7 +123,7 @@ public class FileActivity extends AppCompatActivity {
         final FilenameFilter filter = new RegexFileFilter(".*\\.cb.$");
         final File[] files = comicDir.listFiles(filter);
 
-        final ListAdapter adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, files);
+        final ListAdapter adapter = new ComicAdapter(this, files);
         comicsGridView.setAdapter(adapter);
     }
 
