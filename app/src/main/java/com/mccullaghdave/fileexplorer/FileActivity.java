@@ -40,6 +40,7 @@ public class FileActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
+        // Shared preferences is a built-in key/value storage for app settings
         prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
 
         if (savedInstanceState != null) {
@@ -66,11 +67,13 @@ public class FileActivity extends AppCompatActivity {
         final Editor editor = prefs.edit();
         editor.putStringSet(PREF_KEY_STORAGE_DIRECTORIES, new HashSet<>(directories));
         editor.apply();
+        Log.d(TAG, "Saving directories to shared preferences");
     }
 
     private List<String> retrieveStorageDirectories() {
         final Set<String> set = prefs.getStringSet(PREF_KEY_STORAGE_DIRECTORIES, new HashSet<String>());
         if (set.isEmpty()) {
+            Log.d(TAG, "No comic directories found in shared preferences, including default directory");
             set.add(DEFAULT_COMICS_DIRECTORY);
         }
 

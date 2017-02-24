@@ -46,11 +46,11 @@ public class ComicListActivity extends AppCompatActivity {
     }
 
     private boolean verifyStoragePermissions() {
-        // Check if we have write permission
+        Log.i(TAG, "Check if we have write permission");
         final int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
+            Log.i(TAG, "We don't have permission so prompt the user");
             ActivityCompat.requestPermissions(this, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
         }
 
@@ -60,6 +60,7 @@ public class ComicListActivity extends AppCompatActivity {
     // called when the user responds to the permission dialog
     @Override
     public void onRequestPermissionsResult(final int requestCode, @NonNull final String[] permissions, @NonNull final int[] grantResults) {
+        Log.i(TAG, "User has responded to the request for permission, code=" + requestCode);
         switch (requestCode) {
             case REQUEST_EXTERNAL_STORAGE:
                 handleStoragePermissionResponse(grantResults);
@@ -69,6 +70,7 @@ public class ComicListActivity extends AppCompatActivity {
 
     private void handleStoragePermissionResponse(final int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.i(TAG, "User has granted us storage permission");
             openDirectoryAndDisplayFiles();
         } else {
             Toast.makeText(this, "Storage permission was denied", Toast.LENGTH_LONG).show();
@@ -90,6 +92,7 @@ public class ComicListActivity extends AppCompatActivity {
     private void displayComicBookFiles(final File comicDir) {
         final FilenameFilter filter = new RegexFileFilter(".*\\.cb.$");
         final File[] files = comicDir.listFiles(filter);
+        Log.i(TAG, "Found " + files.length + " comic book files in the directory " + comicDir);
 
         final ListAdapter adapter = new ComicAdapter(this, files);
         comicsGridView.setAdapter(adapter);
