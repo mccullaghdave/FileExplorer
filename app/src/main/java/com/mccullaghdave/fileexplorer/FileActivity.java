@@ -1,43 +1,36 @@
 package com.mccullaghdave.fileexplorer;
 
-import android.Manifest;
-import android.app.Activity;
-import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.GridView;
+import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
-import android.widget.TextView;
+import android.widget.ListView;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.apache.commons.io.filefilter.RegexFileFilter;
-
-import java.io.File;
-import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class FileActivity extends AppCompatActivity {
 
     private static final String TAG = FileActivity.class.getSimpleName();
 
-    private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static final String[] PERMISSIONS_STORAGE = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
+    public static final String PREF_KEY_STORAGE_DIRECTORIES = "PREF_KEY_STORAGE_DIRECTORIES";
+    public static final String EXTRAS_DIRECTORY = "directory";
 
-    private static final String COMICS_DIRECTORY = "Comics";
+    private static final String DEFAULT_COMICS_DIRECTORY = "Comics";
 
-    private TextView logView;
-    private GridView comicsGridView;
+    private ListView directoryList;
+    private SharedPreferences prefs;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -46,124 +39,54 @@ public class FileActivity extends AppCompatActivity {
     private GoogleApiClient client;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
+        // Shared preferences is a built-in key/value storage for app settings
+        prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
+
         if (savedInstanceState != null) {
             Log.d(TAG, "onCreate() Restoring previous state");
         } else {
-            Log.d(TAG, "onCreate() No saved state available");
-            /* initialize app */
+            Log.d(TAG, "onCreate() No saved state available, initializing app");
+            addDefaultComicDirectoryToSharedPreferences();
         }
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_file);
 
-        // text logView to display log messages
-        logView = (TextView) this.findViewById(R.id.logs);
-        comicsGridView = (GridView) this.findViewById(R.id.comic_files);
+        directoryList = (ListView) this.findViewById(R.id.storage_directory_list);
+        directoryList.setOnItemClickListener(new OpenDirectoryClickListener(this));
+        listAllComicDirectories();
 
-        // check if we have write permission for storage
-        if (verifyStoragePermissions(this)) {
-            doTheStorageStuffHere();
-        }
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
+    private void addDefaultComicDirectoryToSharedPreferences() {
+        final List<String> directories = retrieveStorageDirectories();
+        final Editor editor = prefs.edit();
+        editor.putStringSet(PREF_KEY_STORAGE_DIRECTORIES, new HashSet<>(directories));
+        editor.apply();
+        Log.d(TAG, "Saving directories to shared preferences");
+    }
 
-    public boolean verifyStoragePermissions(final Activity activity) {
-        // Check if we have write permission
-        final int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
-            ActivityCompat.requestPermissions(
-                    activity,
-                    PERMISSIONS_STORAGE,
-                    REQUEST_EXTERNAL_STORAGE
-            );
+    private List<String> retrieveStorageDirectories() {
+        final Set<String> set = prefs.getStringSet(PREF_KEY_STORAGE_DIRECTORIES, new HashSet<String>());
+        if (set.isEmpty()) {
+            Log.d(TAG, "No comic directories found in shared preferences, including default directory");
+            set.add(DEFAULT_COMICS_DIRECTORY);
         }
 
-        return permission == PackageManager.PERMISSION_GRANTED;
+        return new ArrayList<>(set);
     }
 
-    // called when the user responds to the permission dialog
-    @Override
-    public void onRequestPermissionsResult(final int requestCode, @NonNull final String[] permissions, @NonNull final int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_EXTERNAL_STORAGE:
-                handleStoragePermissionResponse(grantResults);
-                break;
-        }
-    }
+    private void listAllComicDirectories() {
+        final ListAdapter adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_list_item_1,
+                retrieveStorageDirectories());
 
-    private void handleStoragePermissionResponse(final int[] grantResults) {
-        // If request is cancelled, the result arrays are empty.
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            doTheStorageStuffHere();
-        } else {
-            error("User is a big fat meanie!");
-        }
-    }
-
-    private void doTheStorageStuffHere() {
-        if (isExternalStorageWritable()) {
-            info("Storage state is writable");
-
-            final File comicDir = getComicStorageDir();
-            info("Comic directory is: " + comicDir);
-
-            displayComicBookFiles(comicDir);
-        } else {
-            error("Storage cannot be written to, please ensure your SD card is properly mounted and is not mounted via USB");
-        }
-    }
-
-    private void displayComicBookFiles(final File comicDir) {
-        final FilenameFilter filter = new RegexFileFilter(".*\\.cb.$");
-        final File[] files = comicDir.listFiles(filter);
-
-        final ListAdapter adapter = new ComicAdapter(this, files);
-        comicsGridView.setAdapter(adapter);
-    }
-
-    public File getComicStorageDir() {
-        final File file = Environment.getExternalStoragePublicDirectory(COMICS_DIRECTORY);
-        if (file.exists()) {
-            info("Comic directory already existed");
-        } else {
-            if (file.mkdirs()) {
-                info("Comic directory created");
-            } else {
-                error("Comic directory could not be created");
-            }
-        }
-        if (!file.canRead()) {
-            error("Comic directory is not readable");
-        }
-        if (!file.canWrite()) {
-            error("Comic directory is not writable");
-        }
-        return file;
-    }
-
-    // write log messages to screen and logcat
-    private void info(final String msg) {
-        Log.i(TAG, msg);
-        logView.append(System.lineSeparator());
-        logView.append(msg);
-    }
-
-    // write log messages to screen and logcat
-    private void error(final String msg) {
-        Log.e(TAG, msg);
-        logView.append(System.lineSeparator());
-        logView.append(msg);
-    }
-
-    public boolean isExternalStorageWritable() {
-        final String storageState = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(storageState);
+        directoryList.setAdapter(adapter);
     }
 
     /**
@@ -201,4 +124,5 @@ public class FileActivity extends AppCompatActivity {
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         client.disconnect();
     }
+
 }
