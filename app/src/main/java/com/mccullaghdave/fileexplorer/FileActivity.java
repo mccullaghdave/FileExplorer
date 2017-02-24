@@ -24,8 +24,10 @@ public class FileActivity extends AppCompatActivity {
 
     private static final String TAG = FileActivity.class.getSimpleName();
 
-    private static final String PREF_KEY_STORAGE_DIRECTORIES = "PREF_KEY_STORAGE_DIRECTORIES";
-    private static final String COMICS_DIRECTORY = "Comics";
+    public static final String PREF_KEY_STORAGE_DIRECTORIES = "PREF_KEY_STORAGE_DIRECTORIES";
+    public static final String EXTRAS_DIRECTORY = "directory";
+
+    private static final String DEFAULT_COMICS_DIRECTORY = "Comics";
 
     private ListView directoryList;
     private SharedPreferences prefs;
@@ -51,6 +53,7 @@ public class FileActivity extends AppCompatActivity {
         setContentView(R.layout.activity_file);
 
         directoryList = (ListView) this.findViewById(R.id.storage_directory_list);
+        directoryList.setOnItemClickListener(new OpenDirectoryClickListener(this));
         listAllComicDirectories();
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -65,6 +68,15 @@ public class FileActivity extends AppCompatActivity {
         editor.apply();
     }
 
+    private List<String> retrieveStorageDirectories() {
+        final Set<String> set = prefs.getStringSet(PREF_KEY_STORAGE_DIRECTORIES, new HashSet<String>());
+        if (set.isEmpty()) {
+            set.add(DEFAULT_COMICS_DIRECTORY);
+        }
+
+        return new ArrayList<>(set);
+    }
+
     private void listAllComicDirectories() {
         final ListAdapter adapter = new ArrayAdapter<>(
                 this,
@@ -72,15 +84,6 @@ public class FileActivity extends AppCompatActivity {
                 retrieveStorageDirectories());
 
         directoryList.setAdapter(adapter);
-    }
-
-    private List<String> retrieveStorageDirectories() {
-        final Set<String> set = prefs.getStringSet(PREF_KEY_STORAGE_DIRECTORIES, new HashSet<String>());
-        if (set.isEmpty()) {
-            set.add(COMICS_DIRECTORY);
-        }
-
-        return new ArrayList<>(set);
     }
 
     /**
@@ -118,4 +121,5 @@ public class FileActivity extends AppCompatActivity {
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         client.disconnect();
     }
+
 }
